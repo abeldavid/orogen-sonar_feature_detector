@@ -1,17 +1,19 @@
 name "sonar_feature_detector"
 
 using_library "uw_localization"
+using_library "sonar_detectors"
 
 import_types_from "base"
 import_types_from "uw_localization/types/map.hpp"
-import_types_from "sonar_feature_detectorTypes.hpp"
+#import_types_from "sonar_feature_detectorTypes.hpp"
+import_types_from "sonar_detectors/SonarDetectorTypes.hpp"
 
 task_context "Task" do
   
   input_port("grid_maps", "uw_localization/SimpleGrid").
     doc("GridMap, conatining a grid of sonar features")
     
-  output_port("features", "sonar_feature_detector/SonarFeatures").
+  output_port("features", "sonar_detectors/SonarFeatures").
     doc("A vector potenial sonar features")
     
   property("map_origin", "base/Vector2d").
@@ -27,8 +29,7 @@ task_context "Task" do
     doc("Rate features with this size as best")
     
   property("minimum_object_cells", "int", 1).
-    doc("Objects must have at least this many cells")
-    
+    doc("Objects must have at least this many cells")    
     
   port_driven 
     

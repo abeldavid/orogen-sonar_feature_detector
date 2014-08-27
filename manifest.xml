@@ -16,4 +16,5 @@
   -->
   <depend package="base/types" />
   <depend package="auv_avalon/uw_localization" />
+  <depend package="auv_avalon/sonar_detectors" />
 </package>

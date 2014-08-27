@@ -5,6 +5,7 @@
 
 #include "sonar_feature_detector/TaskBase.hpp"
 #include "uw_localization/types/map.hpp"
+#include "sonar_detectors/SonarDetectorTypes.hpp"
 
 namespace sonar_feature_detector {
 
@@ -34,7 +35,7 @@ namespace sonar_feature_detector {
       /**
        * Perform the graph-serch-algorithm on the map and find conected components
        */
-      SonarFeatures processMap(uw_localization::SimpleGrid &grid);
+      sonar_detectors::SonarFeatures processMap(uw_localization::SimpleGrid &grid);
       
       /**
        * Check, if there is a obstacle at a given position without a flag
@@ -49,12 +50,12 @@ namespace sonar_feature_detector {
       /**
        * Normalize the confidence of all features, so the confidence sum is 1.0
        */
-      void normFeatures(SonarFeatures &features);
+      void normFeatures(sonar_detectors::SonarFeatures &features);
       
       /**
        * Sort the features, based on their confidence
        */
-      void sortFeatures(SonarFeatures &features);
+      void sortFeatures(sonar_detectors::SonarFeatures &features);
 
 
     public:

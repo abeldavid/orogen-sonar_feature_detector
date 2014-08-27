@@ -35,7 +35,7 @@ void Task::updateHook()
     
     if(_grid_maps.readNewest(grid) == RTT::NewData){
       
-      SonarFeatures features = processMap(grid);
+      sonar_detectors::SonarFeatures features = processMap(grid);
       normFeatures( features);
       sortFeatures( features);
       _features.write(features);
@@ -45,7 +45,7 @@ void Task::updateHook()
     
 }
 
-SonarFeatures Task::processMap(uw_localization::SimpleGrid &grid){
+sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &grid){
   
   //Set borders for the graph search -> use a minimal distance to the wall
   
@@ -55,7 +55,7 @@ SonarFeatures Task::processMap(uw_localization::SimpleGrid &grid){
   
   std::stack<base::Vector2d> points_todo;
   uw_localization::SimpleGridElement elem;
-  SonarFeatures features;
+  sonar_detectors::SonarFeatures features;
   features.time = grid.time;
   
   //Perform graph search
@@ -131,7 +131,7 @@ SonarFeatures Task::processMap(uw_localization::SimpleGrid &grid){
         
         if(sum_weight > 0.0 && count_cells >= _minimum_object_cells.get()){
           
-          SonarFeature feature;
+          sonar_detectors::SonarFeature feature;
           feature.position = sum_pos * (1.0 / sum_weight);
           feature.sum_confidence = sum_weight;
           feature.avg_confidence = sum_weight / count_cells;
@@ -190,18 +190,18 @@ bool Task::checkCoordinate(base::Vector2d pos){
   return true;  
 }
 
-void Task::normFeatures(SonarFeatures &features){
+void Task::normFeatures(sonar_detectors::SonarFeatures &features){
   
   double sum_confidence = 0.0;
   
-  for(std::vector<SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
+  for(std::vector<sonar_detectors::SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
     sum_confidence += it->confidence;
     
   }
   
   if(sum_confidence != 0.0){
   
-    for(std::vector<SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
+    for(std::vector<sonar_detectors::SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
       it->confidence *= (1.0 / sum_confidence);
       
     }
@@ -211,7 +211,7 @@ void Task::normFeatures(SonarFeatures &features){
   
 }
 
-void Task::sortFeatures(SonarFeatures &features){
+void Task::sortFeatures(sonar_detectors::SonarFeatures &features){
 
   std::sort( features.features.begin(), features.features.end());
   
