@@ -2,6 +2,7 @@
 
 #include "Task.hpp"
 #include <stack>
+#include <algorithm>
 
 using namespace sonar_feature_detector;
 
@@ -34,14 +35,17 @@ void Task::updateHook()
     
     if(_grid_maps.readNewest(grid) == RTT::NewData){
       
-      processMap(grid);
+      SonarFeatures features = processMap(grid);
+      normFeatures( features);
+      sortFeatures( features);
+      _features.write(features);
       
     }
     
     
 }
 
-void Task::processMap(uw_localization::SimpleGrid &grid){
+SonarFeatures Task::processMap(uw_localization::SimpleGrid &grid){
   
   //Set borders for the graph search -> use a minimal distance to the wall
   
@@ -130,9 +134,13 @@ void Task::processMap(uw_localization::SimpleGrid &grid){
           SonarFeature feature;
           feature.position = sum_pos * (1.0 / sum_weight);
           feature.sum_confidence = sum_weight;
-          feature.confidence = sum_weight / count_cells;
+          feature.avg_confidence = sum_weight / count_cells;
           feature.span = max - min + base::Vector2d(1.0, 1.0); 
           feature.number_of_cells = count_cells;          
+          
+          double size = feature.span.norm();
+          feature.confidence = feature.avg_confidence * ( 1.0 / ( std::fabs(size - _optimal_object_size.get() )  ) );
+          
           
           features.features.push_back(feature);
         }
@@ -145,7 +153,7 @@ void Task::processMap(uw_localization::SimpleGrid &grid){
     
   }
   
-  _features.write(features);
+  return features;
   
 }
 
@@ -182,3 +190,29 @@ bool Task::checkCoordinate(base::Vector2d pos){
   return true;  
 }
 
+void Task::normFeatures(SonarFeatures &features){
+  
+  double sum_confidence = 0.0;
+  
+  for(std::vector<SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
+    sum_confidence += it->confidence;
+    
+  }
+  
+  if(sum_confidence != 0.0){
+  
+    for(std::vector<SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
+      it->confidence *= (1.0 / sum_confidence);
+      
+    }
+    
+  }
+  
+  
+}
+
+void Task::sortFeatures(SonarFeatures &features){
+
+  std::sort( features.features.begin(), features.features.end());
+  
+}

@@ -8,6 +8,7 @@
 
 namespace sonar_feature_detector {
 
+
     /*! \class Task 
      * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
      * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
@@ -33,7 +34,7 @@ namespace sonar_feature_detector {
       /**
        * Perform the graph-serch-algorithm on the map and find conected components
        */
-      void processMap(uw_localization::SimpleGrid &grid);
+      SonarFeatures processMap(uw_localization::SimpleGrid &grid);
       
       /**
        * Check, if there is a obstacle at a given position without a flag
@@ -44,6 +45,16 @@ namespace sonar_feature_detector {
        * Check if a coordinate is inside our map-boundaries
        */
       bool checkCoordinate(base::Vector2d pos);
+      
+      /**
+       * Normalize the confidence of all features, so the confidence sum is 1.0
+       */
+      void normFeatures(SonarFeatures &features);
+      
+      /**
+       * Sort the features, based on their confidence
+       */
+      void sortFeatures(SonarFeatures &features);
 
 
     public:
@@ -69,7 +80,7 @@ namespace sonar_feature_detector {
 
 
         void updateHook();
-
+        
     };
 }
 
