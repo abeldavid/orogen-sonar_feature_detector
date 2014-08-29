@@ -13,8 +13,17 @@ task_context "Task" do
   input_port("grid_maps", "uw_localization/SimpleGrid").
     doc("GridMap, conatining a grid of sonar features")
     
+  input_port("pose_samples", "base/samples/RigidBodyState").
+    doc("Pose sample with the actual position of the vehicle")
+    
   output_port("features", "sonar_detectors/SonarFeatures").
     doc("A vector potenial sonar features")
+    
+  output_port("next_target", "base/Vector3d").
+    doc("Position of the next servoing target")
+    
+  output_port("next_target_feature", "sonar_detectors/SonarFeature").
+    doc("Feature information of the next servoing target")
     
   property("map_origin", "base/Vector2d").
     doc("Origin of our map")
@@ -29,9 +38,14 @@ task_context "Task" do
     doc("Rate features with this size as best")
     
   property("minimum_object_cells", "int", 1).
-    doc("Objects must have at least this many cells")    
+    doc("Objects must have at least this many cells")
+    
+  operation("fix_map").
+    doc("Fix the current map-features and go into servoing mode")
     
   port_driven 
+  
+  runtime_states "BUILDING_MAP", "TARGET_SERVOING", "SERVOING_FINISHED"
     
 end
 

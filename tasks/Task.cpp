@@ -25,6 +25,11 @@ bool Task::startHook()
 {
     if (! TaskBase::startHook())
         return false;
+    
+    servoing_mode = false;
+    fixed_map = false;
+    servoing_finished = false;
+    
     return true;
 }
 void Task::updateHook()
@@ -35,12 +40,72 @@ void Task::updateHook()
     
     if(_grid_maps.readNewest(grid) == RTT::NewData){
       
-      sonar_detectors::SonarFeatures features = processMap(grid);
-      normFeatures( features);
-      sortFeatures( features);
+      
+      if(!servoing_mode){
+        
+        if(state() != BUILDING_MAP){
+          state(BUILDING_MAP);
+        }
+        
+        features = processMap(grid);
+        sortFeatures( features);
+        normFeatures( features);
+        
+        if(fixed_map && features.features.size() > 0){
+          servoing_mode = true;
+          target_features = features;
+          _next_target.write(base::Vector3d(target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0) );
+          _next_target_feature.write(target_features.features[0]);
+          state(TARGET_SERVOING);
+        }
+        
+      }
       _features.write(features);
       
     }
+    
+    base::samples::RigidBodyState rbs;
+    
+    if(_pose_samples.readNewest(rbs) == RTT::NewData){
+    
+      
+      if(servoing_mode && (!servoing_finished) ){
+      
+        if(target_features.features.size() > 0){
+          
+          sonar_detectors::SonarFeature f = target_features.features[0];
+          
+          //Vehicle reached the position of the feature -> select new feature
+          if( std::fabs(rbs.position.x() - f.position.x()) < f.span.x() * 0.5 &&
+            std::fabs(rbs.position.y() - f.position.y()) < f.span.y() * 0.5){
+            
+            target_features.features.erase( target_features.features.begin());
+            
+            if(target_features.features.size() > 0){
+              
+              _next_target.write(base::Vector3d( target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0 ) );
+              _next_target_feature.write( target_features.features[0] );
+              
+            }           
+          
+            
+          }
+          
+          
+        }else{
+          servoing_finished = true;
+          state(SERVOING_FINISHED);
+          
+        } 
+        
+      
+      }
+      
+    }
+    
+    
+    
+    
     
     
 }
@@ -135,11 +200,11 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
           feature.position = sum_pos * (1.0 / sum_weight);
           feature.sum_confidence = sum_weight;
           feature.avg_confidence = sum_weight / count_cells;
-          feature.span = max - min + base::Vector2d(1.0, 1.0); 
+          feature.span = max - min + base::Vector2d(grid.resolution, grid.resolution); 
           feature.number_of_cells = count_cells;          
           
           double size = feature.span.norm();
-          feature.confidence = feature.avg_confidence * ( 1.0 / ( std::fabs(size - _optimal_object_size.get() )  ) );
+          feature.confidence = feature.avg_confidence * ( 1.0 / ( std::fabs(size - _optimal_object_size.get() + 1.0 )  ) );
           
           
           features.features.push_back(feature);
@@ -192,17 +257,17 @@ bool Task::checkCoordinate(base::Vector2d pos){
 
 void Task::normFeatures(sonar_detectors::SonarFeatures &features){
   
-  double sum_confidence = 0.0;
-  
-  for(std::vector<sonar_detectors::SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
-    sum_confidence += it->confidence;
-    
+  //we have no features -> do nothing
+  if(features.features.size() == 0){
+    return;
   }
   
-  if(sum_confidence != 0.0){
+  double best_confidence = features.features.begin()->confidence;
+  
+  if(best_confidence != 0.0){
   
     for(std::vector<sonar_detectors::SonarFeature>::iterator it = features.features.begin(); it != features.features.end(); it++){
-      it->confidence *= (1.0 / sum_confidence);
+      it->confidence *= (1.0 / best_confidence);
       
     }
     
@@ -216,3 +281,8 @@ void Task::sortFeatures(sonar_detectors::SonarFeatures &features){
   std::sort( features.features.begin(), features.features.end());
   
 }
+
+void Task::fix_map(){
+  fixed_map = true;
+}  
+  

@@ -6,6 +6,7 @@
 #include "sonar_feature_detector/TaskBase.hpp"
 #include "uw_localization/types/map.hpp"
 #include "sonar_detectors/SonarDetectorTypes.hpp"
+#include "base/samples/RigidBodyState.hpp"
 
 namespace sonar_feature_detector {
 
@@ -56,6 +57,12 @@ namespace sonar_feature_detector {
        * Sort the features, based on their confidence
        */
       void sortFeatures(sonar_detectors::SonarFeatures &features);
+      
+      bool servoing_mode;
+      bool fixed_map;
+      bool servoing_finished;
+      sonar_detectors::SonarFeatures features;
+      sonar_detectors::SonarFeatures target_features;
 
 
     public:
@@ -81,6 +88,8 @@ namespace sonar_feature_detector {
 
 
         void updateHook();
+        
+        void fix_map();
         
     };
 }
