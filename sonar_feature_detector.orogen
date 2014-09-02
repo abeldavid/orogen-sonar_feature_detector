@@ -40,6 +40,9 @@ task_context "Task" do
   property("minimum_object_cells", "int", 1).
     doc("Objects must have at least this many cells")
     
+  property("confidence_weight", "double", 1.0).
+    doc("Weight factor for optimal path search. If this property is a high value, paths to a feature with high confidence will be rated better")
+    
   operation("fix_map").
     doc("Fix the current map-features and go into servoing mode")
     

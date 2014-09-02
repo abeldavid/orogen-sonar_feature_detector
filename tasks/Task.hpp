@@ -58,6 +58,11 @@ namespace sonar_feature_detector {
        */
       void sortFeatures(sonar_detectors::SonarFeatures &features);
       
+      /**
+       * Sort the particles, based on their confidences and the optimal path
+       */
+      void sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features);      
+      
       bool servoing_mode;
       bool fixed_map;
       bool servoing_finished;

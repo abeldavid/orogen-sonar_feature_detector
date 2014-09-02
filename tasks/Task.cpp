@@ -50,6 +50,7 @@ void Task::updateHook()
         features = processMap(grid);
         sortFeatures( features);
         normFeatures( features);
+        sortFeaturesOptimalRoute( features);
         
         if(fixed_map && features.features.size() > 0){
           servoing_mode = true;
@@ -281,6 +282,47 @@ void Task::sortFeatures(sonar_detectors::SonarFeatures &features){
   std::sort( features.features.begin(), features.features.end());
   
 }
+
+void Task::sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features){
+  
+  if(features.features.size() > 0){
+  
+    std::vector<sonar_detectors::SonarFeature> cp = features.features;
+    features.features.clear();
+    
+    sonar_detectors::SonarFeature f = cp.front();
+    cp.erase(cp.begin());
+    features.features.push_back(f);
+    
+    while(cp.size() > 0){
+      
+      double min = INFINITY;
+      
+      std::vector<sonar_detectors::SonarFeature>::iterator min_it = cp.begin();
+      
+      for(std::vector<sonar_detectors::SonarFeature>::iterator it = cp.begin(); it != cp.end(); it++){
+        
+        double dist = (it->position - f.position).norm() * ( 1.0 +  ( _confidence_weight.get() * (1.0 - it->confidence) ) ) ;
+        
+        if(dist < min){
+          min = dist;
+          min_it = it;
+        }
+        
+        
+      }      
+      
+      f = *min_it;
+      features.features.push_back(f);
+      cp.erase(min_it);
+      
+      
+    }
+  
+  }
+  
+}
+
 
 void Task::fix_map(){
   fixed_map = true;
