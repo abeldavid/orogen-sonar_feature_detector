@@ -29,6 +29,8 @@ bool Task::startHook()
     servoing_mode = false;
     fixed_map = false;
     servoing_finished = false;
+    base::Vector2d middle = (-1.0 * _map_origin.get()) + (0.5 * _map_span.get());
+    lastRBS.position = base::Vector3d(middle.x(), middle.y(), 0.0); //Init position in the middle of the map
     
     return true;
 }
@@ -65,9 +67,8 @@ void Task::updateHook()
       
     }
     
-    base::samples::RigidBodyState rbs;
     
-    if(_pose_samples.readNewest(rbs) == RTT::NewData){
+    if(_pose_samples.readNewest(lastRBS) == RTT::NewData){
     
       
       if(servoing_mode && (!servoing_finished) ){
@@ -77,8 +78,8 @@ void Task::updateHook()
           sonar_detectors::SonarFeature f = target_features.features[0];
           
           //Vehicle reached the position of the feature -> select new feature
-          if( std::fabs(rbs.position.x() - f.position.x()) < f.span.x() * 0.5 &&
-            std::fabs(rbs.position.y() - f.position.y()) < f.span.y() * 0.5){
+          if( std::fabs(lastRBS.position.x() - f.position.x()) < f.span.x() * 0.5 &&
+            std::fabs(lastRBS.position.y() - f.position.y()) < f.span.y() * 0.5){
             
             target_features.features.erase( target_features.features.begin());
             
@@ -102,11 +103,7 @@ void Task::updateHook()
       
       }
       
-    }
-    
-    
-    
-    
+    }    
     
     
 }
@@ -290,9 +287,8 @@ void Task::sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features){
     std::vector<sonar_detectors::SonarFeature> cp = features.features;
     features.features.clear();
     
-    sonar_detectors::SonarFeature f = cp.front();
-    cp.erase(cp.begin());
-    features.features.push_back(f);
+    base::Vector2d pos(lastRBS.position.x(), lastRBS.position.y());
+    sonar_detectors::SonarFeature f;
     
     while(cp.size() > 0){
       
@@ -302,7 +298,7 @@ void Task::sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features){
       
       for(std::vector<sonar_detectors::SonarFeature>::iterator it = cp.begin(); it != cp.end(); it++){
         
-        double dist = (it->position - f.position).norm() * ( 1.0 +  ( _confidence_weight.get() * (1.0 - it->confidence) ) ) ;
+        double dist = (it->position - pos).norm() * ( 1.0 +  ( _confidence_weight.get() * (1.0 - it->confidence) ) ) ;
         
         if(dist < min){
           min = dist;
@@ -313,6 +309,7 @@ void Task::sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features){
       }      
       
       f = *min_it;
+      pos = f.position;
       features.features.push_back(f);
       cp.erase(min_it);
       

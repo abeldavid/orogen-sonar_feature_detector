@@ -68,6 +68,7 @@ namespace sonar_feature_detector {
       bool servoing_finished;
       sonar_detectors::SonarFeatures features;
       sonar_detectors::SonarFeatures target_features;
+      base::samples::RigidBodyState lastRBS;
 
 
     public:
