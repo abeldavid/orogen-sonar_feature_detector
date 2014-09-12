@@ -32,6 +32,8 @@ namespace sonar_feature_detector {
 
       base::Vector2d upper_right_corner;
       base::Vector2d bottom_left_corner;
+      base::Vector2d upper_right_wall;
+      base::Vector2d bottom_left_wall;
       
       /**
        * Perform the graph-serch-algorithm on the map and find conected components
@@ -47,6 +49,12 @@ namespace sonar_feature_detector {
        * Check if a coordinate is inside our map-boundaries
        */
       bool checkCoordinate(base::Vector2d pos);
+      
+      /**
+       * Check if a coordinate is inside our map
+       */
+      bool checkInsideWalls(base::Vector2d pos);
+      
       
       /**
        * Normalize the confidence of all features, so the confidence sum is 1.0

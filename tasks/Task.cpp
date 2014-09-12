@@ -59,6 +59,13 @@ void Task::updateHook()
           target_features = features;
           _next_target.write(base::Vector3d(target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0) );
           _next_target_feature.write(target_features.features[0]);
+          
+          base::LinearAngular6DCommand cmd;
+          cmd.time = grid.time;
+          cmd.linear(0) = target_features.features[0].position.x();
+          cmd.linear(1) = target_features.features[0].position.y();
+          _next_target_command.write(cmd);
+          
           state(TARGET_SERVOING);
         }
         
@@ -88,6 +95,12 @@ void Task::updateHook()
               _next_target.write(base::Vector3d( target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0 ) );
               _next_target_feature.write( target_features.features[0] );
               
+              base::LinearAngular6DCommand cmd;
+              cmd.time = lastRBS.time;
+              cmd.linear(0) = target_features.features[0].position.x();
+              cmd.linear(1) = target_features.features[0].position.y();
+              _next_target_command.write(cmd);             
+              
             }           
           
             
@@ -115,6 +128,9 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
   bottom_left_corner = (-1.0 * _map_origin.get()) + base::Vector2d(_minimum_wall_distance.get(), _minimum_wall_distance.get() );
   upper_right_corner = (-1.0 * _map_origin.get()) + _map_span.get()
     - base::Vector2d(_minimum_wall_distance.get(), _minimum_wall_distance.get() );
+    
+  bottom_left_wall = (-1.0 * _map_origin.get());
+  upper_right_wall = (-1.0 * _map_origin.get()) + _map_span.get();
   
   std::stack<base::Vector2d> points_todo;
   uw_localization::SimpleGridElement elem;
@@ -124,9 +140,9 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
   //Perform graph search
   
   //search for begining of regions
-  for( double x = bottom_left_corner.x() ; x < upper_right_corner.x(); x += grid.resolution){
+  for( double x = bottom_left_wall.x() ; x < upper_right_wall.x(); x += grid.resolution){
    
-    for( double y = bottom_left_corner.y(); y < upper_right_corner.y(); y += grid.resolution){
+    for( double y = bottom_left_wall.y(); y < upper_right_wall.y(); y += grid.resolution){
       
       if(checkObstacle(grid, x, y) ){
         
@@ -135,6 +151,7 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
         base::Vector2d max(-INFINITY, -INFINITY);
         base::Vector2d min(INFINITY, INFINITY);
         int count_cells = 0;
+        bool touch_border = false;
         
         points_todo.push(base::Vector2d(x,y));
           
@@ -146,9 +163,21 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
           elem.flag = true;
           grid.setCell(act_pos.x(), act_pos.y(), elem);
           
-          sum_pos += act_pos * elem.obstacle_conf;
-          sum_weight += elem.obstacle_conf;
-          count_cells++;
+          if(!checkCoordinate(act_pos)){
+            
+            if(_filter_border_structures.get()){
+              touch_border = true;
+            }
+            else{
+              continue;
+            }
+            
+          }else{
+          
+            sum_pos += act_pos * elem.obstacle_conf;
+            sum_weight += elem.obstacle_conf;
+            count_cells++;
+          }
           
           //Correct minimum and maximum coordinates
           if(act_pos.x() > max.x()){
@@ -192,7 +221,7 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
           
         }      
         
-        if(sum_weight > 0.0 && count_cells >= _minimum_object_cells.get()){
+        if(sum_weight > 0.0 && count_cells >= _minimum_object_cells.get() && (!touch_border) ){
           
           sonar_detectors::SonarFeature feature;
           feature.position = sum_pos * (1.0 / sum_weight);
@@ -222,7 +251,7 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
 
 bool Task::checkObstacle(uw_localization::SimpleGrid &grid, double x, double y){
   
-  if(checkCoordinate(base::Vector2d(x,y) ) == false){
+  if(checkInsideWalls(base::Vector2d(x,y) ) == false){
     return false;
   }
   
@@ -252,6 +281,21 @@ bool Task::checkCoordinate(base::Vector2d pos){
     
   return true;  
 }
+
+bool Task::checkInsideWalls(base::Vector2d pos){
+  
+  if(pos.x() < bottom_left_wall.x() || pos.x() > upper_right_wall.x()){
+    return false;
+  }
+  
+  if(pos.y() < bottom_left_wall.y() || pos.y() > upper_right_wall.y()){
+    return false;
+  }
+  
+  return true;
+  
+}
+
 
 void Task::normFeatures(sonar_detectors::SonarFeatures &features){
   

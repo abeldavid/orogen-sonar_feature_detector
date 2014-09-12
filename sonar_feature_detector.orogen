@@ -2,11 +2,13 @@ name "sonar_feature_detector"
 
 using_library "uw_localization"
 using_library "sonar_detectors"
+using_task_library "auv_control"
 
 import_types_from "base"
 import_types_from "uw_localization/types/map.hpp"
 #import_types_from "sonar_feature_detectorTypes.hpp"
 import_types_from "sonar_detectors/SonarDetectorTypes.hpp"
+import_types_from "auv_control/6dControl.hpp"
 
 task_context "Task" do
   
@@ -25,6 +27,9 @@ task_context "Task" do
   output_port("next_target_feature", "sonar_detectors/SonarFeature").
     doc("Feature information of the next servoing target")
     
+  output_port("next_target_command", "base/LinearAngular6DCommand").
+    doc("Position command of the next servoing target")
+    
   property("map_origin", "base/Vector2d").
     doc("Origin of our map")
     
@@ -33,6 +38,9 @@ task_context "Task" do
     
   property("minimum_wall_distance", "double", 1.0).
     doc("Ignore features, which are closer than x meters tto the wall")
+    
+  property("filter_border_structures", "bool", true).
+    doc("Filter out structures, which are connected with the wall-borders")
     
   property("optimal_object_size", "double", 2.0).
     doc("Rate features with this size as best")
