@@ -50,7 +50,10 @@ task_context "Task" do
     
   property("confidence_weight", "double", 1.0).
     doc("Weight factor for optimal path search. If this property is a high value, paths to a feature with high confidence will be rated better")
-    
+  
+  property("servoing_depth", "double", -4.0).
+    doc("Depth for target-servoing")
+  
   operation("fix_map").
     doc("Fix the current map-features and go into servoing mode")
     

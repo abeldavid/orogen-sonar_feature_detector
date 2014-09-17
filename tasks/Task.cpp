@@ -64,6 +64,7 @@ void Task::updateHook()
           cmd.time = grid.time;
           cmd.linear(0) = target_features.features[0].position.x();
           cmd.linear(1) = target_features.features[0].position.y();
+          cmd.linear(2) = _servoing_depth.get();
           _next_target_command.write(cmd);
           
           state(TARGET_SERVOING);
@@ -99,6 +100,7 @@ void Task::updateHook()
               cmd.time = lastRBS.time;
               cmd.linear(0) = target_features.features[0].position.x();
               cmd.linear(1) = target_features.features[0].position.y();
+              cmd.linear(2) = _servoing_depth.get();
               _next_target_command.write(cmd);             
               
             }           
@@ -125,12 +127,12 @@ sonar_detectors::SonarFeatures Task::processMap(uw_localization::SimpleGrid &gri
   
   //Set borders for the graph search -> use a minimal distance to the wall
   
-  bottom_left_corner = (-1.0 * _map_origin.get()) + base::Vector2d(_minimum_wall_distance.get(), _minimum_wall_distance.get() );
-  upper_right_corner = (-1.0 * _map_origin.get()) + _map_span.get()
+  bottom_left_corner = (-1.0 * grid.origin) + base::Vector2d(_minimum_wall_distance.get(), _minimum_wall_distance.get() );
+  upper_right_corner = (-1.0 * grid.origin) + grid.span
     - base::Vector2d(_minimum_wall_distance.get(), _minimum_wall_distance.get() );
     
-  bottom_left_wall = (-1.0 * _map_origin.get());
-  upper_right_wall = (-1.0 * _map_origin.get()) + _map_span.get();
+  bottom_left_wall = (-1.0 * grid.origin);
+  upper_right_wall = (-1.0 * grid.origin) + grid.span;
   
   std::stack<base::Vector2d> points_todo;
   uw_localization::SimpleGridElement elem;
