@@ -31,6 +31,7 @@ bool Task::startHook()
     servoing_finished = false;
     base::Vector2d middle = (-1.0 * _map_origin.get()) + (0.5 * _map_span.get());
     lastRBS.position = base::Vector3d(middle.x(), middle.y(), 0.0); //Init position in the middle of the map
+    wait = false;
     
     return true;
 }
@@ -39,6 +40,27 @@ void Task::updateHook()
     TaskBase::updateHook();
     
     uw_localization::SimpleGrid grid;
+    
+    if(wait && base::Time::now().toSeconds() - timeoutStart.toSeconds() < 5.0){
+      
+      while(_pose_samples.read(lastRBS) == RTT::NewData);
+      
+      return;
+      
+    }else if(wait){
+      wait = false;
+      
+      if(target_features.features.size() > 0){
+        state(TARGET_SERVOING);
+        
+      }else{
+        state(SERVOING_FINISHED);
+        servoing_finished = true;
+      }
+      
+    }
+    
+    
     
     if(_grid_maps.readNewest(grid) == RTT::NewData){
       
@@ -102,17 +124,18 @@ void Task::updateHook()
             
             state(REACHED_TARGET);
           
+            wait = true;
+            timeoutStart = base::Time::now();
+          
             if(target_features.features.size() > 0){
               
               _next_target.write(base::Vector3d( target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0 ) );
               _next_target_feature.write( target_features.features[0] );
-              
-              state(TARGET_SERVOING);  
-            
+                         
               
             }else{
                servoing_finished = true;
-               state(SERVOING_FINISHED);
+               
                return; 
             }
           

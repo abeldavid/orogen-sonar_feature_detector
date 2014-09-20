@@ -74,6 +74,8 @@ namespace sonar_feature_detector {
       bool servoing_mode;
       bool fixed_map;
       bool servoing_finished;
+      bool wait;
+      base::Time timeoutStart;
       sonar_detectors::SonarFeatures features;
       sonar_detectors::SonarFeatures target_features;
       base::samples::RigidBodyState lastRBS;
