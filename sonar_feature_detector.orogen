@@ -48,6 +48,9 @@ task_context "Task" do
   property("minimum_object_cells", "int", 1).
     doc("Objects must have at least this many cells")
     
+  property("minimum_number_of_targets", "int", 0).
+    doc("Minimum number of target-features, before starting target servoing")
+    
   property("confidence_weight", "double", 1.0).
     doc("Weight factor for optimal path search. If this property is a high value, paths to a feature with high confidence will be rated better")
   
@@ -59,7 +62,7 @@ task_context "Task" do
     
   port_driven 
   
-  runtime_states "BUILDING_MAP", "TARGET_SERVOING", "SERVOING_FINISHED"
+  runtime_states "BUILDING_MAP", "TARGET_SERVOING", "REACHED_TARGET", "SERVOING_FINISHED", "NOT_ENOUGH_TARGETS"
     
 end
 

@@ -54,7 +54,7 @@ void Task::updateHook()
         normFeatures( features);
         sortFeaturesOptimalRoute( features);
         
-        if(fixed_map && features.features.size() > 0){
+        if(fixed_map && features.features.size() > _minimum_number_of_targets.get()){
           servoing_mode = true;
           target_features = features;
           _next_target.write(base::Vector3d(target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0) );
@@ -65,9 +65,17 @@ void Task::updateHook()
           cmd.linear(0) = target_features.features[0].position.x();
           cmd.linear(1) = target_features.features[0].position.y();
           cmd.linear(2) = _servoing_depth.get();
+          cmd.angular(1) = 0.0;
+          cmd.angular(2) = 0.0;
           _next_target_command.write(cmd);
           
           state(TARGET_SERVOING);
+        }
+        else if(fixed_map){ //We want to fix the map, but we have not ennough features
+          
+          state(NOT_ENOUGH_TARGETS);
+          fixed_map = false;
+          
         }
         
       }
@@ -91,22 +99,34 @@ void Task::updateHook()
             
             target_features.features.erase( target_features.features.begin());
             
+            state(REACHED_TARGET);
+          
             if(target_features.features.size() > 0){
               
               _next_target.write(base::Vector3d( target_features.features[0].position.x(), target_features.features[0].position.y(), 0.0 ) );
               _next_target_feature.write( target_features.features[0] );
               
-              base::LinearAngular6DCommand cmd;
-              cmd.time = lastRBS.time;
-              cmd.linear(0) = target_features.features[0].position.x();
-              cmd.linear(1) = target_features.features[0].position.y();
-              cmd.linear(2) = _servoing_depth.get();
-              _next_target_command.write(cmd);             
+              state(TARGET_SERVOING);  
+            
               
-            }           
+            }else{
+               servoing_finished = true;
+               state(SERVOING_FINISHED);
+               return; 
+            }
           
             
           }
+          
+           base::LinearAngular6DCommand cmd;
+           cmd.time = lastRBS.time;
+           cmd.linear(0) = target_features.features[0].position.x();
+           cmd.linear(1) = target_features.features[0].position.y();
+           cmd.linear(2) = _servoing_depth.get();
+           cmd.angular(1) = 0.0;
+           cmd.angular(2) = std::atan2(target_features.features[0].position.y() - lastRBS.position.y(),
+                                       target_features.features[0].position.x() - lastRBS.position.x());
+           _next_target_command.write(cmd); 
           
           
         }else{
