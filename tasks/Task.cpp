@@ -413,6 +413,17 @@ void Task::sortFeaturesOptimalRoute(sonar_detectors::SonarFeatures &features){
 
 
 void Task::fix_map(){
-  fixed_map = true;
+  
+  if(!fixed_map){
+    fixed_map = true;
+  }
+  else{
+    servoing_mode = false;
+    fixed_map = false;
+    servoing_finished = false;
+    wait = false;
+    state(BUILDING_MAP);
+  }
+  
 }  
   
