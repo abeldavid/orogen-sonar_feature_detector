@@ -65,6 +65,7 @@ void Task::updateHook()
           cmd.linear(0) = target_features.features[0].position.x();
           cmd.linear(1) = target_features.features[0].position.y();
           cmd.linear(2) = _servoing_depth.get();
+          cmd.angular(0) = 0.0;
           cmd.angular(1) = 0.0;
           cmd.angular(2) = 0.0;
           _next_target_command.write(cmd);
@@ -123,6 +124,7 @@ void Task::updateHook()
            cmd.linear(0) = target_features.features[0].position.x();
            cmd.linear(1) = target_features.features[0].position.y();
            cmd.linear(2) = _servoing_depth.get();
+           cmd.angular(0) = 0.0;
            cmd.angular(1) = 0.0;
            cmd.angular(2) = std::atan2(target_features.features[0].position.y() - lastRBS.position.y(),
                                        target_features.features[0].position.x() - lastRBS.position.x());
